@@ -72,10 +72,11 @@ public class MapPresets {
         viewOptions.setProjection(projection);
         viewOptions.setResolutions(new double[] { 4000.0, 2000.0, 1000.0, 500.0, 250.0, 100.0, 50.0, 20.0, 10.0, 5.0, 2.5, 1.0, 0.5, 0.25, 0.1 });
         View view = new View(viewOptions);
-        Coordinate centerCoordinate = new Coordinate(2616491, 1240287);
+        //Coordinate centerCoordinate = new Coordinate(2616491, 1240287); // Kanton Solothurn
+        Coordinate centerCoordinate = new Coordinate(2607810, 1228896); // Baurecht und proj. Grunstück
 
         view.setCenter(centerCoordinate);
-        view.setZoom(6);
+        view.setZoom(11);
         
         MapOptions mapOptions = OLFactory.createOptions();
         mapOptions.setTarget(mapId);

@@ -1,0 +1,191 @@
+package ch.so.agi.wgc;
+
+import static elemental2.dom.DomGlobal.console;
+
+import static org.jboss.elemento.Elements.a;
+import static org.jboss.elemento.Elements.body;
+import static org.jboss.elemento.Elements.div;
+import static org.jboss.elemento.Elements.table;
+import static org.jboss.elemento.Elements.tbody;
+import static org.jboss.elemento.Elements.tr;
+import static org.jboss.elemento.Elements.td;
+import static org.jboss.elemento.Elements.img;
+import static org.jboss.elemento.Elements.span;
+import static org.jboss.elemento.EventType.*;
+import static org.dominokit.domino.ui.style.Unit.px;
+
+import java.util.List;
+
+import org.dominokit.domino.ui.button.Button;
+import org.dominokit.domino.ui.button.ButtonSize;
+import org.dominokit.domino.ui.icons.Icons;
+import org.dominokit.domino.ui.style.Color;
+import org.gwtproject.safehtml.shared.SafeHtmlUtils;
+import org.jboss.elemento.Attachable;
+import org.jboss.elemento.HtmlContentBuilder;
+import org.jboss.elemento.IsElement;
+
+import com.google.gwt.user.client.Window;
+import com.google.gwt.xml.client.Document;
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
+import com.google.gwt.xml.client.Text;
+import com.google.gwt.xml.client.XMLParser;
+
+import elemental2.dom.DomGlobal;
+import elemental2.dom.EventListener;
+import elemental2.dom.HTMLDivElement;
+import elemental2.dom.HTMLElement;
+import elemental2.dom.HTMLTableElement;
+import elemental2.dom.Headers;
+import elemental2.dom.Location;
+import elemental2.dom.MutationRecord;
+import elemental2.dom.RequestInit;
+import ol.Map;
+import ol.MapBrowserEvent;
+
+public class Popup implements IsElement<HTMLElement>, Attachable {
+    private final HTMLElement root;
+    
+    
+    private final String LAYERS = "ch.so.agi.av.grundstuecke.rechtskraeftig,ch.so.agi.av.grundstuecke.projektierte";
+    private final String BASE_URL_FEATUREINFO = "https://geo.so.ch/api/v1/featureinfo/somap?service=WMS&version=1.3.0&request=GetFeatureInfo&x=51&y=51&i=51&j=51&height=101&width=101&srs=EPSG:2056&crs=EPSG:2056&info_format=text%2Fxml&with_geometry=true&with_maptip=false&feature_count=100&FI_POINT_TOLERANCE=8&FI_LINE_TOLERANCE=8&FI_POLYGON_TOLERANCE=4";
+    private final String BASE_URL_REPORT = "https://geo.so.ch/api/v1/document/";  
+    //baseUrlBigMap: https://geo.so.ch/map/
+
+    public Popup(Map map, MapBrowserEvent event) {
+        HTMLElement icon = Icons.ALL.close().setId("popupCloseIcon").element();
+        icon.style.verticalAlign = "middle";
+        icon.addEventListener("click", new EventListener() {
+            @Override
+            public void handleEvent(elemental2.dom.Event evt) {
+                root.remove();
+            }
+        });
+
+        HTMLElement closeButton = span().id("popupHeaderButtonSpan").add(icon).element();                    
+        HtmlContentBuilder<HTMLDivElement> popupBuilder = div().id("popup");
+        popupBuilder.add(
+                div().id("popupHeader")
+                .add(span().id("popupHeaderTextSpan").textContent("Objektinformation"))
+                .add(closeButton)
+                ); 
+        
+        root = (HTMLDivElement) popupBuilder.element();
+        root.hidden = true;
+//        root.style.position = "absolute";
+//        root.style.top = "5px";
+//        root.style.left = "5px";
+
+        double resolution = map.getView().getResolution();
+
+        // 50/51/101-Ansatz ist anscheinend bei OpenLayers normal.
+        // -> siehe baseUrlFeatureInfo resp. ein Original-Request
+        // im Web GIS Client.
+        double minX = event.getCoordinate().getX() - 50 * resolution;
+        double maxX = event.getCoordinate().getX() + 51 * resolution;
+        double minY = event.getCoordinate().getY() - 50 * resolution;
+        double maxY = event.getCoordinate().getY() + 51 * resolution;
+
+        String urlFeatureInfo = BASE_URL_FEATUREINFO + "&layers=" + LAYERS;
+        urlFeatureInfo += "&query_layers=" + LAYERS;
+        urlFeatureInfo += "&bbox=" + minX + "," + minY + "," + maxX + "," + maxY;
+
+        RequestInit requestInit = RequestInit.create();
+        Headers headers = new Headers();
+        headers.append("Content-Type", "application/x-www-form-urlencoded"); 
+        requestInit.setHeaders(headers);
+        
+        DomGlobal.fetch(urlFeatureInfo)
+        .then(response -> {
+            if (!response.ok) {
+                return null;
+            }
+            return response.text();
+        })
+        .then(xml -> {
+            Document messageDom = XMLParser.parse(xml);
+            
+            if (messageDom.getElementsByTagName("Feature").getLength() == 0) {
+                root.appendChild(div().css("popupNoContent").textContent("Keine weiteren Informationen").element());
+            }
+                                
+            for (int i=0; i<messageDom.getElementsByTagName("Layer").getLength(); i++) {
+                Node layerNode = messageDom.getElementsByTagName("Layer").item(i);
+                String layerName = ((com.google.gwt.xml.client.Element) layerNode).getAttribute("layername"); 
+                String layerTitle = ((com.google.gwt.xml.client.Element) layerNode).getAttribute("name"); 
+                
+                if (layerNode.getChildNodes().getLength() == 0) {
+                    continue;
+                };
+                
+                NodeList featureNodes = ((com.google.gwt.xml.client.Element) layerNode).getElementsByTagName("Feature");
+                for (int m=0; m<featureNodes.getLength(); m++) {
+                    com.google.gwt.xml.client.Element featureElement = ((com.google.gwt.xml.client.Element) featureNodes.item(m));
+                    String featureId = featureElement.getAttribute("id");
+                    
+                    // TODO: Hardcodiert, weil falsch konfiguriert bei uns.
+                    if (layerName.equalsIgnoreCase("ch.so.agi.av.grundstuecke.projektierte")) {
+                        layerTitle = "projektierte Grundstücke";
+                    }
+                    root.appendChild(div().css("popupLayerHeader").textContent(layerTitle).element());     
+                    
+                    HtmlContentBuilder<HTMLDivElement> popupContentBuilder = div().id(featureId).css("popupContent");
+                    
+                    HtmlContentBuilder<HTMLTableElement> tableBuilder = table().css("attribute-list");
+                    NodeList attributeNodes = featureElement.getElementsByTagName("Attribute");
+                    for (int n=0; n<attributeNodes.getLength(); n++) {
+                            com.google.gwt.xml.client.Element attrElement = ((com.google.gwt.xml.client.Element) attributeNodes.item(n));
+                            String attrName = attrElement.getAttribute("name");
+                            String attrValue = attrElement.getAttribute("value");
+                            
+                            if (attrName.equalsIgnoreCase("geometry")) {
+                                continue;
+                            }
+                            // TODO: Warum taucht das im GetFeatureInfo auf?
+                            if (attrName.equalsIgnoreCase("bfs_nr")) {
+                                continue;
+                            }
+                            
+                            tableBuilder
+                            .add(
+                                    tr()
+                                    .add(
+                                            td().css("identify-attr-title wrap").add(attrName + ":"))
+                                    .add(
+                                            td().css("identify-attr-value wrap").add(attrValue))
+                                );
+                    }
+                    popupContentBuilder.add(tableBuilder.element());
+                    root.appendChild(popupContentBuilder.element());
+                    root.hidden = false;
+                    
+                    // TEST
+                    // Es braucht wohl noch einen FeatureContent mit Header und Content, damit
+                    // es noch weniger nervös wirkt.
+                    bind(popupContentBuilder.element(), mouseenter, popupEvent -> {
+                        console.log("add vector layer");
+                    });
+                    
+                    bind(popupContentBuilder.element(), mouseleave, popupEvent -> {
+                        console.log("remove vector layer");
+                    });
+                }
+            }
+            return null;
+        })
+        .catch_(error -> {
+            console.log(error);
+            DomGlobal.window.alert(error);
+            return null;
+        });
+    }
+    
+    @Override
+    public void attach(MutationRecord mutationRecord) {}
+
+    @Override
+    public HTMLElement element() {
+        return root;
+    }
+}

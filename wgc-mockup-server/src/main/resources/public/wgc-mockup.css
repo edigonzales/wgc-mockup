@@ -11,3 +11,109 @@ body, div {
 #map {
   height: 100%;
 }
+
+#popup {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16), 0 2px 10px 0 rgba(0,0,0,0.12);
+    border-radius: 3px;
+    font-weight: normal;
+    font-size: 11px;
+    width: 100%;
+    color: #333333;
+    max-width: 450px;
+    min-width: 260px;
+    max-height: calc(100% - 10px);
+    background-color: #FFFFFF;
+    overflow: auto;
+}
+
+#popupHeader {
+    border-radius: 3px 3px 0px 0px;
+    font-weight: bold;
+    font-size: 13px;
+    height: 40px;
+    line-height: 40px;
+    width: 100%;
+    color: #333333;
+    background-color: #F7F7F7;
+}
+
+#popupCloseIcon {
+    cursor: pointer;
+}
+
+#popupHeaderTextSpan {
+    margin: 0px;
+    padding-left: 10px;
+    font-weight: bold;
+    line-height: 40px;    
+    display: inline-block; 
+    width: 70%;        
+}
+
+#popupHeaderButtonSpan {
+    margin: 0px;
+    padding-right: 10px;
+    height: 40px;
+    line-height: 40px;
+    text-align: right;
+    display: inline-block;
+    width: 30%;   
+    vertical-align: middle;  
+}
+
+.popupLayerHeader {
+    padding-left: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #333333;
+    background-color: #E9E9E9;
+    height: 40px;
+    line-height: 40px;
+    text-align: left;
+    vertical-align: middle;  
+}
+
+.popupNoContent {
+    padding: 10px;
+}
+
+.popupContent {
+    padding: 10px;
+}
+
+table.attribute-list {
+    width: 100%;
+}
+
+table.attribute-list td {
+    overflow: hidden;
+    vertical-align: top;
+    text-overflow: ellipsis;
+}
+
+td.identify-attr-title {
+    padding-right: 10px;
+    min-width: 10ch;
+    width: 40%;
+    padding-right: 1em;
+}
+
+td.identify-attr-value {
+    max-width: 0;
+    width: 60%;
+}
+
+a {
+    cursor: pointer;
+    color: #e53935;
+    text-decoration: none;
+}
+
+a:hover {
+    cursor: pointer;
+    color: #e53935;
+    text-decoration: underline;
+}

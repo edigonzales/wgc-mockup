@@ -11,8 +11,10 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.i18n.client.NumberFormat;
 
 import elemental2.dom.HTMLElement;
+import ol.Coordinate;
 import ol.Extent;
 import ol.Map;
+import ol.MapBrowserEvent;
 import ol.OLFactory;
 import ol.proj.Projection;
 import ol.proj.ProjectionOptions;
@@ -34,6 +36,7 @@ public class App implements EntryPoint {
 
     private String MAP_DIV_ID = "map";
     private Map map;
+    HTMLElement popup;
 
 	public void onModuleLoad() {
 	    init();
@@ -59,8 +62,18 @@ public class App implements EntryPoint {
         HTMLElement mapElement = div().id(MAP_DIV_ID).element();
         body().add(mapElement);
         map = MapPresets.getColorMap(MAP_DIV_ID);
-
         
+        map.addClickListener(new ol.event.EventListener<MapBrowserEvent>() {
+            @Override
+            public void onEvent(MapBrowserEvent event) {                
+                if (popup != null) {
+                   popup.remove(); 
+                }
+                popup = new Popup(map, event).element();
+                body().add(popup);
+            }
+        });
+      
         console.log("fubar");
 	}
 }

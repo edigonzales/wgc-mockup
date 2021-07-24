@@ -3,6 +3,7 @@
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.json.JSON" />
   <inherits name="com.google.gwt.i18n.I18N" />
+  <inherits name="com.google.gwt.xml.XML" />
 
   <extend-property name="locale" values="de_CH" />
   <set-property name="locale" value="de_CH" />
