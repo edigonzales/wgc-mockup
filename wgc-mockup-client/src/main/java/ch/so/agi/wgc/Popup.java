@@ -64,6 +64,7 @@ import ol.source.ImageWmsOptions;
 import ol.source.ImageWmsParams;
 import ol.source.Vector;
 import ol.source.VectorOptions;
+import ol.style.Fill;
 import ol.style.Stroke;
 import ol.style.Style;
 
@@ -179,11 +180,15 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                                     console.log("add vector layer");
                                     ol.layer.Vector vlayer = createHighlightVectorLayer(attrValue);
                                     map.addLayer(vlayer);
+                                    
+                                    popupContentBuilder.element().style.backgroundColor = "rgba(249,128,0,0.3)";
                                 });
                                 
                                 bind(featureContentBuilder.element(), mouseleave, popupEvent -> {
                                     console.log("remove vector layer");
                                     removeHighlightVectorLayer();
+                                    
+                                    popupContentBuilder.element().style.backgroundColor = "white";
                                 });
 
                                 continue;
@@ -240,9 +245,13 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
 
         Style style = new Style();
         Stroke stroke = new Stroke();
-        stroke.setWidth(8);
-        stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
+        stroke.setWidth(5);
+        stroke.setColor(new ol.color.Color(249, 128, 0, 1.0));
+        //stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
         style.setStroke(stroke);
+        Fill fill = new Fill();
+        fill.setColor(new ol.color.Color(255, 255, 80, 0.6));
+        style.setFill(fill);
         feature.setStyle(style);
 
         ol.Collection<Feature> lstFeatures = new ol.Collection<Feature>();
@@ -251,7 +260,7 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
         VectorOptions vectorSourceOptions = OLFactory.createOptions();
         vectorSourceOptions.setFeatures(lstFeatures);
         Vector vectorSource = new Vector(vectorSourceOptions);
-
+        
         VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
         vectorLayerOptions.setSource(vectorSource);
         ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
