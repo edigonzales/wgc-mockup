@@ -41,24 +41,57 @@ import elemental2.dom.Headers;
 import elemental2.dom.Location;
 import elemental2.dom.MutationRecord;
 import elemental2.dom.RequestInit;
+
+import ol.Coordinate;
+import ol.Extent;
+import ol.Feature;
+import ol.FeatureOptions;
 import ol.Map;
 import ol.MapBrowserEvent;
+import ol.OLFactory;
+import ol.Overlay;
+import ol.OverlayOptions;
+import ol.View;
+import ol.format.GeoJson;
+import ol.format.Wkt;
+import ol.geom.Geometry;
+import ol.layer.Base;
+import ol.layer.Image;
+import ol.layer.LayerOptions;
+import ol.layer.VectorLayerOptions;
+import ol.source.ImageWms;
+import ol.source.ImageWmsOptions;
+import ol.source.ImageWmsParams;
+import ol.source.Vector;
+import ol.source.VectorOptions;
+import ol.style.Stroke;
+import ol.style.Style;
 
 public class Popup implements IsElement<HTMLElement>, Attachable {
     private final HTMLElement root;
     
-    
+    private String ID_ATTR_NAME = "id";
+    private String HIGHLIGHT_VECTOR_LAYER_ID = "highlight_vector_layer";
+    private String HIGHLIGHT_VECTOR_FEATURE_ID = "highlight_fid";
+
     private final String LAYERS = "ch.so.agi.av.grundstuecke.rechtskraeftig,ch.so.agi.av.grundstuecke.projektierte";
     private final String BASE_URL_FEATUREINFO = "https://geo.so.ch/api/v1/featureinfo/somap?service=WMS&version=1.3.0&request=GetFeatureInfo&x=51&y=51&i=51&j=51&height=101&width=101&srs=EPSG:2056&crs=EPSG:2056&info_format=text%2Fxml&with_geometry=true&with_maptip=false&feature_count=100&FI_POINT_TOLERANCE=8&FI_LINE_TOLERANCE=8&FI_POLYGON_TOLERANCE=4";
     private final String BASE_URL_REPORT = "https://geo.so.ch/api/v1/document/";  
     //baseUrlBigMap: https://geo.so.ch/map/
+    
+    private Map map;
 
     public Popup(Map map, MapBrowserEvent event) {
+        this.map = map;
+        
         HTMLElement icon = Icons.ALL.close().setId("popupCloseIcon").element();
         icon.style.verticalAlign = "middle";
         icon.addEventListener("click", new EventListener() {
             @Override
             public void handleEvent(elemental2.dom.Event evt) {
+                
+                // TODO; removeHighlighting(); 
+                
                 root.remove();
             }
         });
@@ -128,7 +161,9 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                     if (layerName.equalsIgnoreCase("ch.so.agi.av.grundstuecke.projektierte")) {
                         layerTitle = "projektierte Grundstücke";
                     }
-                    root.appendChild(div().css("popupLayerHeader").textContent(layerTitle).element());     
+                    
+                    HtmlContentBuilder<HTMLDivElement> featureContentBuilder = div();
+                    featureContentBuilder.add(div().css("popupLayerHeader").textContent(layerTitle).element());
                     
                     HtmlContentBuilder<HTMLDivElement> popupContentBuilder = div().id(featureId).css("popupContent");
                     
@@ -140,6 +175,17 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                             String attrValue = attrElement.getAttribute("value");
                             
                             if (attrName.equalsIgnoreCase("geometry")) {
+                                bind(featureContentBuilder.element(), mouseenter, popupEvent -> {
+                                    console.log("add vector layer");
+                                    ol.layer.Vector vlayer = createHighlightVectorLayer(attrValue);
+                                    map.addLayer(vlayer);
+                                });
+                                
+                                bind(featureContentBuilder.element(), mouseleave, popupEvent -> {
+                                    console.log("remove vector layer");
+                                    removeHighlightVectorLayer();
+                                });
+
                                 continue;
                             }
                             // TODO: Warum taucht das im GetFeatureInfo auf?
@@ -157,19 +203,10 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                                 );
                     }
                     popupContentBuilder.add(tableBuilder.element());
-                    root.appendChild(popupContentBuilder.element());
-                    root.hidden = false;
+                    featureContentBuilder.add(popupContentBuilder.element());
                     
-                    // TEST
-                    // Es braucht wohl noch einen FeatureContent mit Header und Content, damit
-                    // es noch weniger nervös wirkt.
-                    bind(popupContentBuilder.element(), mouseenter, popupEvent -> {
-                        console.log("add vector layer");
-                    });
-                    
-                    bind(popupContentBuilder.element(), mouseleave, popupEvent -> {
-                        console.log("remove vector layer");
-                    });
+                    root.appendChild(featureContentBuilder.element());
+                    root.hidden = false;                    
                 }
             }
             return null;
@@ -188,4 +225,64 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
     public HTMLElement element() {
         return root;
     }
+    
+    private ol.layer.Vector createHighlightVectorLayer(String geometry) {
+        Geometry highlightGeometry = new Wkt().readGeometry(geometry);
+        return createHighlightVectorLayer(highlightGeometry);
+    }
+
+    private ol.layer.Vector createHighlightVectorLayer(Geometry geometry) {
+        FeatureOptions featureOptions = OLFactory.createOptions();
+        featureOptions.setGeometry(geometry);
+
+        Feature feature = new Feature(featureOptions);
+        //feature.setId(REAL_ESTATE_VECTOR_FEATURE_ID);
+
+        Style style = new Style();
+        Stroke stroke = new Stroke();
+        stroke.setWidth(8);
+        stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
+        style.setStroke(stroke);
+        feature.setStyle(style);
+
+        ol.Collection<Feature> lstFeatures = new ol.Collection<Feature>();
+        lstFeatures.push(feature);
+
+        VectorOptions vectorSourceOptions = OLFactory.createOptions();
+        vectorSourceOptions.setFeatures(lstFeatures);
+        Vector vectorSource = new Vector(vectorSourceOptions);
+
+        VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
+        vectorLayerOptions.setSource(vectorSource);
+        ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
+        vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_VECTOR_LAYER_ID);
+
+        return vectorLayer;
+    }
+    
+    private void removeHighlightVectorLayer() {
+        Base vlayer = getMapLayerById(HIGHLIGHT_VECTOR_LAYER_ID);
+        map.removeLayer(vlayer);
+    }
+
+    private Base getMapLayerById(String id) {
+        ol.Collection<Base> layers = map.getLayers();
+        for (int i = 0; i < layers.getLength(); i++) {
+            Base item = layers.item(i);
+            try {
+                String layerId = item.get(ID_ATTR_NAME);
+                if (layerId == null) {
+                    continue;
+                }
+                if (layerId.equalsIgnoreCase(id)) {
+                    return item;
+                }
+            } catch (Exception e) {
+                console.log(e.getMessage());
+                console.log("should not reach here");
+            }
+        }
+        return null;
+    }
+
 }
