@@ -19,5 +19,5 @@ Or without downloading all the snapshots again:
 ## Todo
 - Settings mit Env Vars
 - map.set(settings), damit nicht in Popup hardcodiert werden muss
-- Vektorlayer für Highlighting (wie automatisch entfernen beim Schliessen des Popups?)
+- Farben etc. als globale Variable. Popup-Settings-Klasse, damit man das überschreiben kann.
 - URL interface 
