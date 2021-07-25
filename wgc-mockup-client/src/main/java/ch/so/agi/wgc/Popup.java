@@ -14,6 +14,7 @@ import static org.jboss.elemento.Elements.span;
 import static org.jboss.elemento.EventType.*;
 import static org.dominokit.domino.ui.style.Unit.px;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.dominokit.domino.ui.button.Button;
@@ -84,15 +85,14 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
 
     public Popup(Map map, MapBrowserEvent event) {
         this.map = map;
+        removeHighlightVectorLayer();
         
         HTMLElement icon = Icons.ALL.close().setId("popupCloseIcon").element();
         icon.style.verticalAlign = "middle";
         icon.addEventListener("click", new EventListener() {
             @Override
             public void handleEvent(elemental2.dom.Event evt) {
-                
-                // TODO; removeHighlighting(); 
-                
+                removeHighlightVectorLayer(); 
                 root.remove();
             }
         });
@@ -143,12 +143,13 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
             if (messageDom.getElementsByTagName("Feature").getLength() == 0) {
                 root.appendChild(div().css("popupNoContent").textContent("Keine weiteren Informationen").element());
             }
-                                
+
+            List<Feature> featureList = new ArrayList<Feature>();
             for (int i=0; i<messageDom.getElementsByTagName("Layer").getLength(); i++) {
                 Node layerNode = messageDom.getElementsByTagName("Layer").item(i);
                 String layerName = ((com.google.gwt.xml.client.Element) layerNode).getAttribute("layername"); 
                 String layerTitle = ((com.google.gwt.xml.client.Element) layerNode).getAttribute("name"); 
-                
+                                
                 if (layerNode.getChildNodes().getLength() == 0) {
                     continue;
                 };
@@ -176,19 +177,20 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                             String attrValue = attrElement.getAttribute("value");
                             
                             if (attrName.equalsIgnoreCase("geometry")) {
+                                FeatureOptions featureOptions = OLFactory.createOptions();
+                                featureOptions.setGeometry(new Wkt().readGeometry(attrValue));
+                                Feature feature = new Feature(featureOptions);
+                                feature.setId(featureId);
+                                featureList.add(feature);
+
                                 bind(featureContentBuilder.element(), mouseenter, popupEvent -> {
-                                    console.log("add vector layer");
-                                    ol.layer.Vector vlayer = createHighlightVectorLayer(attrValue);
-                                    map.addLayer(vlayer);
-                                    
                                     popupContentBuilder.element().style.backgroundColor = "rgba(249,128,0,0.3)";
+                                    toggleFeatureFill(featureId);
                                 });
                                 
                                 bind(featureContentBuilder.element(), mouseleave, popupEvent -> {
-                                    console.log("remove vector layer");
-                                    removeHighlightVectorLayer();
-                                    
                                     popupContentBuilder.element().style.backgroundColor = "white";
+                                    toggleFeatureFill(featureId);
                                 });
 
                                 continue;
@@ -211,9 +213,10 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
                     featureContentBuilder.add(popupContentBuilder.element());
                     
                     root.appendChild(featureContentBuilder.element());
-                    root.hidden = false;                    
+                    root.hidden = false;   
                 }
-            }
+            }            
+            createHighlightVectorLayer(featureList);
             return null;
         })
         .catch_(error -> {
@@ -225,49 +228,100 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
     
     @Override
     public void attach(MutationRecord mutationRecord) {}
-
+    
     @Override
     public HTMLElement element() {
         return root;
     }
     
-    private ol.layer.Vector createHighlightVectorLayer(String geometry) {
-        Geometry highlightGeometry = new Wkt().readGeometry(geometry);
-        return createHighlightVectorLayer(highlightGeometry);
-    }
-
-    private ol.layer.Vector createHighlightVectorLayer(Geometry geometry) {
-        FeatureOptions featureOptions = OLFactory.createOptions();
-        featureOptions.setGeometry(geometry);
-
-        Feature feature = new Feature(featureOptions);
-        //feature.setId(REAL_ESTATE_VECTOR_FEATURE_ID);
-
+    private void toggleFeatureFill(String id) {
+        ol.layer.Vector vectorLayer = (ol.layer.Vector) getMapLayerById(HIGHLIGHT_VECTOR_LAYER_ID);
+        Vector vectorSource = vectorLayer.getSource();
+        Feature feature = vectorSource.getFeatureById(id);
+        
         Style style = new Style();
         Stroke stroke = new Stroke();
-        stroke.setWidth(5);
+        stroke.setWidth(4);
+        stroke.setColor(new ol.color.Color(249, 128, 0, 1.0));
+        style.setStroke(stroke);
+        Fill fill = new Fill();
+        if (feature.get("highlighted") != null && (boolean) feature.get("highlighted")) {
+            fill.setColor(new ol.color.Color(255, 255, 80, 0.6));
+            feature.set("highlighted", false);
+
+        } else {
+            fill.setColor(new ol.color.Color(249, 128, 0, 1.0));
+            feature.set("highlighted", true);
+        }
+        style.setFill(fill);
+        feature.setStyle(style);        
+    }
+        
+    private void createHighlightVectorLayer(List<Feature> features) {
+        Style style = new Style();
+        Stroke stroke = new Stroke();
+        stroke.setWidth(4);
         stroke.setColor(new ol.color.Color(249, 128, 0, 1.0));
         //stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
         style.setStroke(stroke);
         Fill fill = new Fill();
         fill.setColor(new ol.color.Color(255, 255, 80, 0.6));
         style.setFill(fill);
-        feature.setStyle(style);
 
-        ol.Collection<Feature> lstFeatures = new ol.Collection<Feature>();
-        lstFeatures.push(feature);
+        ol.Collection<Feature> featureCollection = new ol.Collection<Feature>();
+        for (Feature feature : features) {
+            feature.setStyle(style);
+            featureCollection.push(feature);
+        }
 
         VectorOptions vectorSourceOptions = OLFactory.createOptions();
-        vectorSourceOptions.setFeatures(lstFeatures);
+        vectorSourceOptions.setFeatures(featureCollection);
         Vector vectorSource = new Vector(vectorSourceOptions);
         
         VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
         vectorLayerOptions.setSource(vectorSource);
         ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
         vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_VECTOR_LAYER_ID);
-
-        return vectorLayer;
+        map.addLayer(vectorLayer);
     }
+    
+//    private ol.layer.Vector createHighlightVectorLayer(String geometry) {
+//        Geometry highlightGeometry = new Wkt().readGeometry(geometry);
+//        return createHighlightVectorLayer(highlightGeometry);
+//    }
+//
+//    private ol.layer.Vector createHighlightVectorLayer(Geometry geometry) {
+//        FeatureOptions featureOptions = OLFactory.createOptions();
+//        featureOptions.setGeometry(geometry);
+//
+//        Feature feature = new Feature(featureOptions);
+//        //feature.setId(REAL_ESTATE_VECTOR_FEATURE_ID);
+//
+//        Style style = new Style();
+//        Stroke stroke = new Stroke();
+//        stroke.setWidth(5);
+//        stroke.setColor(new ol.color.Color(249, 128, 0, 1.0));
+//        //stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
+//        style.setStroke(stroke);
+//        Fill fill = new Fill();
+//        fill.setColor(new ol.color.Color(255, 255, 80, 0.6));
+//        style.setFill(fill);
+//        feature.setStyle(style);
+//
+//        ol.Collection<Feature> lstFeatures = new ol.Collection<Feature>();
+//        lstFeatures.push(feature);
+//
+//        VectorOptions vectorSourceOptions = OLFactory.createOptions();
+//        vectorSourceOptions.setFeatures(lstFeatures);
+//        Vector vectorSource = new Vector(vectorSourceOptions);
+//        
+//        VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
+//        vectorLayerOptions.setSource(vectorSource);
+//        ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
+//        vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_VECTOR_LAYER_ID);
+//
+//        return vectorLayer;
+//    }
     
     private void removeHighlightVectorLayer() {
         Base vlayer = getMapLayerById(HIGHLIGHT_VECTOR_LAYER_ID);
