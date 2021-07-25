@@ -21,3 +21,4 @@ Or without downloading all the snapshots again:
 - map.set(settings), damit nicht in Popup hardcodiert werden muss
 - Farben etc. als globale Variable. Popup-Settings-Klasse, damit man das überschreiben kann.
 - URL interface 
+- mindestens ÖREB-Kataster und der "andere Service" mittels Settings veränderbar.
