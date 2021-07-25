@@ -39,30 +39,17 @@ import elemental2.dom.HTMLDivElement;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLTableElement;
 import elemental2.dom.Headers;
-import elemental2.dom.Location;
 import elemental2.dom.MutationRecord;
 import elemental2.dom.RequestInit;
 
-import ol.Coordinate;
-import ol.Extent;
 import ol.Feature;
 import ol.FeatureOptions;
 import ol.Map;
 import ol.MapBrowserEvent;
 import ol.OLFactory;
-import ol.Overlay;
-import ol.OverlayOptions;
-import ol.View;
-import ol.format.GeoJson;
 import ol.format.Wkt;
-import ol.geom.Geometry;
 import ol.layer.Base;
-import ol.layer.Image;
-import ol.layer.LayerOptions;
 import ol.layer.VectorLayerOptions;
-import ol.source.ImageWms;
-import ol.source.ImageWmsOptions;
-import ol.source.ImageWmsParams;
 import ol.source.Vector;
 import ol.source.VectorOptions;
 import ol.style.Fill;
@@ -284,45 +271,7 @@ public class Popup implements IsElement<HTMLElement>, Attachable {
         vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_VECTOR_LAYER_ID);
         map.addLayer(vectorLayer);
     }
-    
-//    private ol.layer.Vector createHighlightVectorLayer(String geometry) {
-//        Geometry highlightGeometry = new Wkt().readGeometry(geometry);
-//        return createHighlightVectorLayer(highlightGeometry);
-//    }
-//
-//    private ol.layer.Vector createHighlightVectorLayer(Geometry geometry) {
-//        FeatureOptions featureOptions = OLFactory.createOptions();
-//        featureOptions.setGeometry(geometry);
-//
-//        Feature feature = new Feature(featureOptions);
-//        //feature.setId(REAL_ESTATE_VECTOR_FEATURE_ID);
-//
-//        Style style = new Style();
-//        Stroke stroke = new Stroke();
-//        stroke.setWidth(5);
-//        stroke.setColor(new ol.color.Color(249, 128, 0, 1.0));
-//        //stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
-//        style.setStroke(stroke);
-//        Fill fill = new Fill();
-//        fill.setColor(new ol.color.Color(255, 255, 80, 0.6));
-//        style.setFill(fill);
-//        feature.setStyle(style);
-//
-//        ol.Collection<Feature> lstFeatures = new ol.Collection<Feature>();
-//        lstFeatures.push(feature);
-//
-//        VectorOptions vectorSourceOptions = OLFactory.createOptions();
-//        vectorSourceOptions.setFeatures(lstFeatures);
-//        Vector vectorSource = new Vector(vectorSourceOptions);
-//        
-//        VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
-//        vectorLayerOptions.setSource(vectorSource);
-//        ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
-//        vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_VECTOR_LAYER_ID);
-//
-//        return vectorLayer;
-//    }
-    
+        
     private void removeHighlightVectorLayer() {
         Base vlayer = getMapLayerById(HIGHLIGHT_VECTOR_LAYER_ID);
         map.removeLayer(vlayer);
