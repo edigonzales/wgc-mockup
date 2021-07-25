@@ -17,20 +17,14 @@ import static org.dominokit.domino.ui.style.Unit.px;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dominokit.domino.ui.button.Button;
-import org.dominokit.domino.ui.button.ButtonSize;
 import org.dominokit.domino.ui.icons.Icons;
-import org.dominokit.domino.ui.style.Color;
-import org.gwtproject.safehtml.shared.SafeHtmlUtils;
 import org.jboss.elemento.Attachable;
 import org.jboss.elemento.HtmlContentBuilder;
 import org.jboss.elemento.IsElement;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.xml.client.Document;
 import com.google.gwt.xml.client.Node;
 import com.google.gwt.xml.client.NodeList;
-import com.google.gwt.xml.client.Text;
 import com.google.gwt.xml.client.XMLParser;
 
 import elemental2.dom.DomGlobal;
