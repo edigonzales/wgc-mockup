@@ -10,6 +10,13 @@
 
   <artifactId>wgc-mockup-server</artifactId>
 
+	<properties>
+		<java.version>11</java.version>
+		<repackage.classifier/>
+		<spring-native.version>0.10.1</spring-native.version>
+	</properties>
+
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -32,18 +39,21 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>
       <optional>true</optional>
     </dependency>
+    -->
     <dependency>
       <groupId>org.springframework.experimental</groupId>
       <artifactId>spring-graalvm-native</artifactId>
-      <version>0.8.5</version>
+      <version>${spring-native.version}</version>
     </dependency>
   </dependencies>
 
+<!--
   <repositories>
     <repository>
       <id>spring-milestone</id>
@@ -59,6 +69,27 @@
       <url>https://repo.spring.io/milestone</url>
     </pluginRepository>
   </pluginRepositories>
+-->
+	<repositories>
+		<repository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+
+
 
   <build>
     <finalName>wgc-mockup</finalName>
@@ -68,6 +99,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.0</version>
       </plugin>
+<!--
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -83,6 +115,43 @@
           <excludeDevtools>true</excludeDevtools>
         </configuration>
       </plugin>
+-->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<classifier>${repackage.classifier}</classifier>
+					<image>
+						<builder>paketobuildpacks/builder:tiny</builder>
+						<env>
+							<BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>
+						</env>
+					</image>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.springframework.experimental</groupId>
+				<artifactId>spring-aot-maven-plugin</artifactId>
+				<version>${spring-native.version}</version>
+				<executions>
+					<execution>
+						<id>test-generate</id>
+						<goals>
+							<goal>test-generate</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>generate</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -200,8 +269,10 @@
         </property>
       </activation>
     </profile>
+
+    
     <profile>
-      <id>native</id>
+<!--       <id>native</id>
       <build>
         <plugins>
           <plugin>
@@ -230,12 +301,9 @@
               <argLine>-Dorg.graalvm.nativeimage.imagecode=agent
                 -Dspring.xml.ignore=true -Dspring.spel.ignore=true
                 -agentlib:native-image-agent=access-filter-file=target/classes/access-filter.json,config-merge-dir=target/classes/META-INF/native-image</argLine>
-              <!-- <includes> <include>**/ApplicationTests.java</include> </includes> -->
             </configuration>
           </plugin>
           <plugin>
-            <!-- https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/ 
-              https://repo.spring.io/milestone/org/springframework/experimental/spring-graalvm-native-docs/0.8.5/spring-graalvm-native-docs-0.8.5.zip!/reference/index.html#options -->
             <groupId>org.graalvm.nativeimage</groupId>
             <artifactId>native-image-maven-plugin</artifactId>
             <version>20.3.0</version>
@@ -259,6 +327,48 @@
           </plugin>
         </plugins>
       </build>
+ -->    
+ 
+			<id>native</id>
+			<properties>
+				<repackage.classifier>exec</repackage.classifier>
+				<native-buildtools.version>0.9.1</native-buildtools.version>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.graalvm.buildtools</groupId>
+					<artifactId>junit-platform-native</artifactId>
+					<version>${native-buildtools.version}</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.graalvm.buildtools</groupId>
+						<artifactId>native-maven-plugin</artifactId>
+						<version>${native-buildtools.version}</version>
+						<executions>
+							<execution>
+								<id>test-native</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>build-native</id>
+								<phase>package</phase>
+								<goals>
+									<goal>build</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+ 
     </profile>
   </profiles>
 </project>
