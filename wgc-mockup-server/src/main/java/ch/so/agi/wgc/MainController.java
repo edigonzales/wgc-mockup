@@ -17,6 +17,7 @@ public class MainController {
     
     @GetMapping("/settings")
     public ResponseEntity<?> getSettings() {
+        System.out.println("ping");
         return ResponseEntity.ok().body(settings);
     }
 }

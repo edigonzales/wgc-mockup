@@ -74,6 +74,6 @@ public class App implements EntryPoint {
             }
         });
       
-        console.log("fubar");
+        console.log("foo bar");
 	}
 }
