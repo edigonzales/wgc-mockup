@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-20.3
+FROM ghcr.io/graalvm/graalvm-ce:java11-21.2
 RUN gu install native-image
 RUN native-image --version
 COPY . /home/app
