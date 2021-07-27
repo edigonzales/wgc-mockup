@@ -41,7 +41,7 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>wgc-mockup</finalName>
+    <finalName>wgc-mockup-server</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
