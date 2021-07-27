@@ -19,6 +19,12 @@ Or without downloading all the snapshots again:
 ## Build
 ### JVM
 ```
+./mvnw clean package -Penv-prod
+```
+
+Dockerimage:
+```
+docker build -t edigonzales/wgc-mockup-jvm -f wgc-mockup-server/src/main/docker/Dockerfile.jvm .
 ```
 
 ### Native image
@@ -28,7 +34,7 @@ Or without downloading all the snapshots again:
 
 Ohne Tests:
 ```
-mvn -Penv-prod,native -DskipTests package
+./mvnw -Penv-prod,native -DskipTests package
 ```
 
 Mit Tests dauert es doppelt solange, weil das Image doppelt erstellt wird (?). Es gibt die "native tests", die noch nicht funktionieren: gleiche Fehlermeldung wegen "unpack before package...".
