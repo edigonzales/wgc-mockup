@@ -77,6 +77,8 @@
   <build>
     <finalName>wgc-mockup</finalName>
     <plugins>
+
+    <!-- TODO ist das noch nötig?-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -100,46 +102,25 @@
       </plugin>
 -->
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<classifier>${repackage.classifier}</classifier>
-					<image>
-						<builder>paketobuildpacks/builder:tiny</builder>
-						<env>
-							<BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>
-						</env>
-					</image>
-				</configuration>
-			</plugin>
-
-			<plugin>
 				<groupId>org.springframework.experimental</groupId>
 				<artifactId>spring-aot-maven-plugin</artifactId>
 				<version>${spring-native.version}</version>
-          <configuration>
-<release>11</release>
-          </configuration>
-
+				<configuration>
+					<removeSpelSupport>true</removeSpelSupport>
+					<removeYamlSupport>true</removeYamlSupport>
+				</configuration>
 				<executions>
 					<execution>
 						<id>test-generate</id>
 						<goals>
 							<goal>test-generate</goal>
 						</goals>
-          <configuration>
-<release>11</release>
-          </configuration>
 					</execution>
 					<execution>
 						<id>generate</id>
 						<goals>
 							<goal>generate</goal>
 						</goals>
-          <configuration>
-<release>11</release>
-          </configuration>
-
 					</execution>
 				</executions>
 			</plugin>
@@ -244,6 +225,7 @@
         <plugins>
           <!-- Das ist "build smell", weil das Entpacken vor dem Packen kommt. 
             Eclipse und Maven reklamiert auch. Siehe README.md -->
+ 
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
@@ -271,6 +253,7 @@
               </execution>
             </executions>
           </plugin>
+     
         </plugins>
       </build>
     </profile>
@@ -284,70 +267,13 @@
       </activation>
     </profile>
 
-    
-    <profile>
-<!--       <id>native</id>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>make-native-image-config-folder</id>
-                <phase>test-compile</phase>
-                <configuration>
-                  <tasks>
-                    <mkdir
-                      dir="${project.basedir}/target/classes/META-INF/native-image/" />
-                  </tasks>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.0</version>
-            <configuration>
-              <argLine>-Dorg.graalvm.nativeimage.imagecode=agent
-                -Dspring.xml.ignore=true -Dspring.spel.ignore=true
-                -agentlib:native-image-agent=access-filter-file=target/classes/access-filter.json,config-merge-dir=target/classes/META-INF/native-image</argLine>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.graalvm.nativeimage</groupId>
-            <artifactId>native-image-maven-plugin</artifactId>
-            <version>20.3.0</version>
-            <configuration>
-              <mainClass>ch.so.agi.wgc.Application</mainClass>
-              <buildArgs>-Dspring.native.remove-yaml-support=false
-                -Dspring.spel.ignore=true</buildArgs>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>native-image</goal>
-                </goals>
-                <phase>package</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-maven-plugin</artifactId>
-          </plugin>
-        </plugins>
-      </build>
- -->    
- 
-			<id>native</id>
+        <profile>
+            <id>native</id>
 			<properties>
 				<repackage.classifier>exec</repackage.classifier>
 				<native-buildtools.version>0.9.1</native-buildtools.version>
 			</properties>
+
 			<dependencies>
 				<dependency>
 					<groupId>org.graalvm.buildtools</groupId>
@@ -356,33 +282,56 @@
 					<scope>test</scope>
 				</dependency>
 			</dependencies>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.graalvm.buildtools</groupId>
-						<artifactId>native-maven-plugin</artifactId>
-						<version>${native-buildtools.version}</version>
-						<executions>
-							<execution>
-								<id>test-native</id>
-								<phase>test</phase>
-								<goals>
-									<goal>test</goal>
-								</goals>
-							</execution>
-							<execution>
-								<id>build-native</id>
-								<phase>package</phase>
-								<goals>
-									<goal>build</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
+            <build>
+                <plugins>
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+            <argLine>-DspringAot=true -agentlib:native-image-agent=access-filter-file=src/test/resources/access-filter.json,config-merge-dir=target/classes/META-INF/native-image</argLine>
+        </configuration>
+    </plugin>
 
- 
-    </profile>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>test-native</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>test</phase>
+                            </execution>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <buildArgs>
+                              <buildArg>--enable-url-protocols=http</buildArg>
+                              <buildArg>--no-fallback</buildArg>
+                              <buildArg>-Dspring.native.remove-yaml-support=false</buildArg>
+                              <buildArg>-Dspring.spel.ignore=true</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                    <!-- Avoid a clash between Spring Boot repackaging and native-maven-plugin -->
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <classifier>exec</classifier>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
   </profiles>
 </project>

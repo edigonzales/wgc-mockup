@@ -16,6 +16,29 @@ Or without downloading all the snapshots again:
 ./mvnw gwt:codeserver -pl *-client -am -nsu
 ```
 
+## Build
+### JVM
+```
+```
+
+### Native image
+```
+./mvnw -Penv-prod,native package
+```
+
+Ohne Tests:
+```
+mvn -Penv-prod,native -DskipTests package
+```
+
+Mit Tests dauert es doppelt solange, weil das Image doppelt erstellt wird (?). Es gibt die "native tests", die noch nicht funktionieren: gleiche Fehlermeldung wegen "unpack before package...".
+
+
+Build mit Docker:
+```
+
+```
+
 ## Todo
 - Settings mit Env Vars
 - map.set(settings), damit nicht in Popup hardcodiert werden muss

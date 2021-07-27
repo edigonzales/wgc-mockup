@@ -7,10 +7,21 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+
+
+
   <properties>
     <spring-boot.version>2.5.3</spring-boot.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.3</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
 
   <dependencyManagement>
     <dependencies>
@@ -22,6 +33,7 @@
         <scope>import</scope>
       </dependency>
 
+<!--
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
@@ -29,6 +41,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+-->
     </dependencies>
   </dependencyManagement>
 
@@ -60,7 +73,7 @@
           <version>1.0.0</version>
           <extensions>true</extensions>
           <configuration>
-            <!--<sourceLevel>11</sourceLevel>-->
+            <sourceLevel>11</sourceLevel>
             <failOnError>true</failOnError>
           </configuration>
         </plugin>
@@ -89,7 +102,8 @@
       </plugins>
     </pluginManagement>
   </build>
-<modules>  <module>wgc-mockup-client</module>
+  <modules>
+    <module>wgc-mockup-client</module>
     <module>wgc-mockup-shared</module>
     <module>wgc-mockup-server</module>
   </modules>
