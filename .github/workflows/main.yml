@@ -34,3 +34,4 @@ jobs:
       - name: 'Build native image'
         run: |
           ./mvnw -Penv-prod,native -DskipTests package
+          ls -la wgc-mockup-server/target
