@@ -4,12 +4,12 @@ on: [push]
 
 jobs:
   build:
-    # env:
-    #   DOCKER_ACCOUNT: sogis
-    #   DOCKER_REPO: standortkarte
-    #   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-    #   DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}} 
-    #   BUILD_NUMBER: ${{ github.run_number }}
+    env:
+      DOCKER_ACCOUNT: edigonzales
+      DOCKER_REPO: wgc-mockup-native
+      DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}} 
+      BUILD_NUMBER: ${{ github.run_number }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -33,5 +33,16 @@ jobs:
           gu install native-image
       - name: 'Build native image'
         run: |
-          ./mvnw -Penv-prod,native -DskipTests package
+          ./mvnw -e -B -q -Penv-prod,native -DskipTests clean package
           ls -la wgc-mockup-server/target
+      - name: Build inside Docker Container and create final Docker Image
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+          docker build -t $DOCKER_ACCOUNT/$DOCKER_REPO:latest -f Dockerfile.native-build .
+          docker tag $DOCKER_ACCOUNT/$DOCKER_REPO:latest $DOCKER_ACCOUNT/$DOCKER_REPO:0.0.$BUILD_NUMBER
+      - name: Push Docker Images
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+          docker images
+          docker push $DOCKER_ACCOUNT/$DOCKER_REPO:latest
+          docker push $DOCKER_ACCOUNT/$DOCKER_REPO:0.0.$BUILD_NUMBER

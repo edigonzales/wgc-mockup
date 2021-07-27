@@ -39,10 +39,14 @@ Ohne Tests:
 
 Mit Tests dauert es doppelt solange, weil das Image doppelt erstellt wird (?). Es gibt die "native tests", die noch nicht funktionieren: gleiche Fehlermeldung wegen "unpack before package...".
 
-
-Build mit Docker:
+Dockerimage:
+```
+docker build -t edigonzales/wgc-mockup-native -f wgc-mockup-server/src/main/docker/Dockerfile.native .
 ```
 
+### Native image with Docker:
+```
+docker build -t edigonzales/wgc-mockup-native -f wgc-mockup-server/src/main/docker/Dockerfile.native-build .
 ```
 
 ## Todo
