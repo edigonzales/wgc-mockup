@@ -1,6 +1,6 @@
 FROM bellsoft/liberica-openjre-alpine:11.0.12-7 as builder
 WORKDIR /home/app
-ARG JAR_FILE=wgc-mockup-server/target/wgc-mockup-server.jar
+ARG JAR_FILE=wgc-mockup-server/target/wgc-mockup.jar
 COPY ${JAR_FILE} /home/app/application.jar
 RUN java -Djarmode=layertools -jar /home/app/application.jar extract
 
